@@ -484,4 +484,67 @@ contract RoundsTest is Test {
     }
     assertLe(sumMatches, poolAmount);
   }
+
+  function test_SpecificMutantKillers() public {
+    // 1. Kill Rounds.sol:167 pNameBytes.length == MAX_PROJECT_NAME (40 bytes) allowed
+    string[] memory n40 = new string[](1);
+    bytes memory exact40 = new bytes(40);
+    for (uint256 i = 0; i < 40; i++) exact40[i] = "a";
+    n40[0] = string(exact40);
+    address[] memory p40 = new address[](1);
+    p40[0] = payee1;
+
+    vm.prank(organiser);
+    uint256 rId40 = rounds.open{value: 1 ether}("Exact 40 Proj", uint64(block.timestamp + 2 days), n40, p40);
+    assertEq(rId40, 1);
+
+    // 2. Kill Rounds.sol:346 sumIdeal == pool in preview
+    // Give gifts so sumIdeal == pool
+    vm.prank(donorA);
+    rounds.give{value: 1 ether}(rId40, 0);
+    vm.prank(donorB);
+    rounds.give{value: 1 ether}(rId40, 0);
+    // ideal = (2*1e9)^2 - 2e18 = 4e18 - 2e18 = 2 ether.
+    // Let's create a round with pool == 2 ether
+    string[] memory n2 = new string[](1);
+    n2[0] = "Proj Two";
+    address[] memory p2 = new address[](1);
+    p2[0] = payee2;
+    vm.prank(organiser);
+    uint256 rIdExact = rounds.open{value: 2 ether}("Exact Pool Match", uint64(block.timestamp + 2 days), n2, p2);
+
+    vm.prank(donorA);
+    rounds.give{value: 1 ether}(rIdExact, 0);
+    vm.prank(donorB);
+    rounds.give{value: 1 ether}(rIdExact, 0);
+
+    (uint256[] memory prevExact, uint256 retExact) = rounds.preview(rIdExact);
+    assertEq(prevExact[0], 2 ether);
+    assertEq(retExact, 0);
+
+    // 3. Kill Rounds.sol:371, 372, 378, 379 - latest() pagination and boundary
+    (uint256[] memory ids, Rounds.Round[] memory rList) = rounds.latest(0, 10);
+    assertEq(ids.length, 2);
+    assertEq(ids[0], 2);
+    assertEq(ids[1], 1);
+    assertEq(rList.length, 2);
+
+    (uint256[] memory idsOffset, ) = rounds.latest(1, 1);
+    assertEq(idsOffset.length, 1);
+    assertEq(idsOffset[0], 1);
+
+    // 4. Kill Rounds.sol:109 & 281 - withdraw twice in same transaction or normal sequence
+    vm.warp(block.timestamp + 3 days);
+    rounds.finalize(rIdExact);
+    uint256 p2Bal = rounds.pending(payee2);
+    assertGt(p2Bal, 0);
+
+    vm.prank(payee2);
+    rounds.withdraw();
+    assertEq(rounds.pending(payee2), 0);
+    // Second withdraw reverts NothingToWithdraw
+    vm.prank(payee2);
+    vm.expectRevert(Rounds.NothingToWithdraw.selector);
+    rounds.withdraw();
+  }
 }
