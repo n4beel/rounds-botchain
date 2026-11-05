@@ -8,85 +8,115 @@ import { footerLinks } from "@/lib/botchain/chain";
 import BuiltOnBotChain from "@/components/botchain/BuiltOnBotChain";
 import { app } from "@/lib/app-config";
 
-export type NavItem = { href: string; label: string };
+export interface NavRoute {
+  path: string;
+  name: string;
+}
 
 interface PageShellProps {
   children: React.ReactNode;
-  nav?: NavItem[];
-  title?: string;
-  description?: string;
+  routes?: NavRoute[];
+  headline?: string;
+  lead?: string;
 }
 
-/**
- * App frame.
- *
- * A top bar rather than ghost-pay's 220px rail. These apps have two or three screens, and a rail
- * that wide spends a fifth of a laptop window — and all of a phone — on three links. The bar is
- * the same at every width, which also means there is no drawer, no focus trap and no hamburger to
- * get wrong.
- *
- * Height is `100dvh` rather than `100vh`. On mobile Safari and Chrome, `100vh` is the viewport
- * with the browser chrome *retracted*, so a `h-screen` layout with `overflow-hidden` pushes its
- * own footer under the address bar and the user cannot scroll to it.
- */
-export default function PageShell({ children, nav = [], title, description }: PageShellProps) {
+export default function PageShell({
+  children,
+  routes = [
+    { path: "/", name: "Funding Rounds" },
+    { path: "/new", name: "Open Round" },
+    { path: "/me", name: "My Ledger" },
+  ],
+  headline,
+  lead,
+}: PageShellProps) {
   const links = footerLinks();
+  const currentPath = usePathname();
+
   return (
     <div
-      className="flex flex-col overflow-x-hidden"
-      style={{ minHeight: "100dvh", background: "var(--bg-base)" }}
+      className="flex flex-col min-h-screen text-[var(--text-primary)]"
+      style={{ backgroundColor: "var(--bg-base)" }}
     >
       <header
-        className="sticky top-0 z-30 flex-shrink-0"
+        className="sticky top-0 z-30 flex-shrink-0 backdrop-blur-md"
         style={{
-          borderBottom: "1px solid var(--border-subtle)",
-          background: "var(--bg-surface)",
+          borderBottom: "1px solid var(--border-default)",
+          backgroundColor: "var(--bg-surface)",
         }}
       >
-        <div className="mx-auto w-full max-w-[880px] px-4 md:px-6">
-          <div className="flex items-center gap-3 py-2.5">
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0 no-underline">
-              <span
-                className="w-2 h-2 flex-shrink-0"
-                style={{ background: "var(--accent)" }}
+        <div className="max-w-5xl mx-auto px-4 md:px-6">
+          <div className="flex items-center justify-between py-3.5 gap-4">
+            <Link href="/" className="flex items-center gap-3 no-underline group">
+              <div
+                className="w-4 h-4 rounded-full shadow-sm group-hover:scale-110 transition-transform"
+                style={{ backgroundColor: "var(--accent)" }}
                 aria-hidden="true"
               />
-              <span
-                className="text-[14px] font-semibold tracking-[-0.01em]"
-                style={{ color: "var(--text-primary)" }}
-              >
+              <span className="font-heading text-xl font-bold tracking-tight text-[var(--text-primary)]">
                 {app.name}
               </span>
             </Link>
 
-            <div className="flex-1" />
-            <NetworkBadge />
-            <div className="w-[150px] md:w-[180px] flex-shrink-0">
-              <ConnectButton />
+            <nav className="hidden sm:flex items-center gap-2" aria-label="Desktop Navigation">
+              {routes.map((r) => {
+                const isActive = currentPath === r.path;
+                return (
+                  <Link
+                    key={r.path}
+                    href={r.path}
+                    className={`px-3.5 py-1.5 text-xs font-semibold rounded-full font-sans transition-colors ${
+                      isActive
+                        ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-xs"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]"
+                    }`}
+                  >
+                    {r.name}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="flex items-center gap-3">
+              <NetworkBadge />
+              <div className="w-[145px] sm:w-[175px]">
+                <ConnectButton />
+              </div>
             </div>
           </div>
 
-          {nav.length > 0 && <Nav items={nav} />}
+          <div className="flex sm:hidden items-center justify-around pb-2.5 pt-1 border-t border-[var(--border-subtle)]">
+            {routes.map((r) => {
+              const isActive = currentPath === r.path;
+              return (
+                <Link
+                  key={r.path}
+                  href={r.path}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                    isActive
+                      ? "bg-[var(--accent)] text-[var(--accent-ink)] font-bold"
+                      : "text-[var(--text-secondary)]"
+                  }`}
+                >
+                  {r.name}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 mx-auto w-full max-w-[880px] px-4 py-6 md:px-6 md:py-8">
-        {(title || description) && (
-          <div className="mb-6">
-            {title && (
-              <h1
-                className="text-[20px] md:text-[24px] font-semibold tracking-[-0.015em]"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {title}
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 md:px-6 md:py-8">
+        {(headline || lead) && (
+          <div className="mb-6 space-y-1">
+            {headline && (
+              <h1 className="font-heading text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
+                {headline}
               </h1>
             )}
-            {description && (
-              <p
-                className="mt-1.5 text-[13px] leading-relaxed"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {description}
+            {lead && (
+              <p className="text-sm text-[var(--text-secondary)] font-sans max-w-3xl">
+                {lead}
               </p>
             )}
           </div>
@@ -94,86 +124,45 @@ export default function PageShell({ children, nav = [], title, description }: Pa
         {children}
       </main>
 
-      {/*
-        The ecosystem footer is required, not decorative. BOT Chain's project assessment criteria
-        ask that the footer or an ecosystem-partnership section carry the BOT Chain name and link
-        to both botchain.ai and the explorer; a site without it is not counted, however complete
-        the product is. It lives in the shared shell so no project can ship missing it.
-      */}
       <footer
-        className="flex-shrink-0 mx-auto w-full max-w-[880px] px-4 py-6 md:px-6"
-        style={{ borderTop: "1px solid var(--border-subtle)" }}
+        className="mt-auto border-t py-6 text-xs text-[var(--text-muted)]"
+        style={{
+          borderColor: "var(--border-default)",
+          backgroundColor: "var(--bg-surface)",
+        }}
       >
-        <div className="flex flex-col gap-3">
-          <p className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-            {app.tagline}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="inline-flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="inline-block w-2 h-2 flex-shrink-0"
-                style={{ background: "var(--accent)", borderRadius: "1px" }}
-              />
-              <BuiltOnBotChain
-                className="text-[11px] uppercase tracking-[0.06em]"
-                style={{ color: "var(--text-secondary)" }}
-              />
-            </span>
-
+        <div className="max-w-5xl mx-auto px-4 md:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-5 flex-wrap justify-center sm:justify-start">
+            {links.contract && (
+              <a
+                href={links.contract}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 hover:text-[var(--text-primary)] transition-colors"
+              >
+                Contract
+              </a>
+            )}
             <a
               href={links.site}
               target="_blank"
-              rel="noreferrer"
-              className="text-[11px] underline"
-              style={{ color: "var(--text-tertiary)" }}
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:text-[var(--text-primary)] transition-colors"
             >
               botchain.ai
             </a>
-
             <a
               href={links.explorer}
               target="_blank"
-              rel="noreferrer"
-              className="text-[11px] underline"
-              style={{ color: "var(--text-tertiary)" }}
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:text-[var(--text-primary)] transition-colors"
             >
-              BOT Chain Explorer
+              Explorer
             </a>
           </div>
+          <BuiltOnBotChain />
         </div>
       </footer>
     </div>
-  );
-}
-
-/**
- * Horizontal tabs. `aria-current` rather than colour alone marks the active one, and the active
- * check is an exact match so `/` does not light up on every page.
- */
-function Nav({ items }: { items: NavItem[] }) {
-  const pathname = usePathname();
-
-  return (
-    <nav className="flex items-center gap-1 -mb-px overflow-x-auto">
-      {items.map((item) => {
-        const active = pathname === item.href;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            className="nav-link flex items-center px-3 py-2 text-[12px] uppercase tracking-[0.04em] no-underline whitespace-nowrap"
-            style={{
-              color: active ? "var(--accent)" : "var(--text-secondary)",
-              borderBottom: `1px solid ${active ? "var(--accent)" : "transparent"}`,
-            }}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
-    </nav>
   );
 }
