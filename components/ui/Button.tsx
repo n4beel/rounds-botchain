@@ -2,7 +2,7 @@
 
 import { ButtonHTMLAttributes, CSSProperties, forwardRef } from "react";
 
-type Variant = "primary" | "secondary" | "danger" | "outline";
+type Variant = "primary" | "secondary" | "danger" | "outline" | "ghost";
 type Size = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -15,6 +15,7 @@ const variantStyles: Record<Variant, CSSProperties> = {
   primary: { backgroundColor: "var(--accent)", color: "var(--accent-ink)", border: "1px solid var(--accent)" },
   secondary: { backgroundColor: "var(--bg-elevated)", color: "var(--text-primary)", border: "1px solid var(--border-default)" },
   outline: { backgroundColor: "transparent", color: "var(--text-primary)", border: "1px solid var(--border-strong)" },
+  ghost: { backgroundColor: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border-default)" },
   danger: { backgroundColor: "transparent", color: "var(--danger)", border: "1px solid var(--danger)" },
 };
 

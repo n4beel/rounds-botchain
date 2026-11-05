@@ -154,11 +154,11 @@ describe("Rounds Integration Test (Spec §5)", () => {
     expect(previewOnChain[1]).toBe(modelResult.returned);
 
     // 6. Fast forward time past endsAt
-    await publicClient.request({
+    await (publicClient.request as any)({
       method: "evm_increaseTime",
       params: [8000],
     });
-    await publicClient.request({
+    await (publicClient.request as any)({
       method: "evm_mine",
       params: [],
     });
