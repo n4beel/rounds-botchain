@@ -45,7 +45,7 @@ export default function NetworkBadge() {
         onClick={() => switchChain({ chainId: activeBotChain.id })}
         disabled={isPending}
         className="inline-flex items-center gap-1.5 px-2 py-1 text-[10px] uppercase tracking-[0.06em] flex-shrink-0 cursor-pointer"
-        style={{ borderRadius: "2px", border: "1px solid var(--warning)", color: "var(--warning)", background: "transparent" }}
+        style={{ borderRadius: "2px", border: "1px solid var(--warning)", color: "var(--warning)", background: "var(--menu-bg)" }}
         title={title}
       >
         {isPending ? "Switching…" : `Wrong network — switch to ${activeBotChain.name}`}
@@ -59,7 +59,8 @@ export default function NetworkBadge() {
       style={{
         borderRadius: "2px",
         border: `1px solid ${warn ? "var(--warning)" : "var(--border-default)"}`,
-        color: warn ? "var(--warning)" : "var(--text-secondary)",
+        color: warn ? "var(--warning)" : "var(--menu-muted)",
+        background: "var(--menu-bg)",
       }}
       title={title}
     >
