@@ -107,14 +107,14 @@ export default function NewRoundPage() {
 
     try {
       setSubmitting(true);
-      // Use chain time, not the browser clock: the contract checks the length against
-      // the block timestamp at mining time, which is later than any time read now.
-      // A ten-minute margin (block age plus time in the wallet prompt) keeps the round at least MIN_DURATION long when mined.
+      // Use chain time, not the browser clock: the contract checks the length against the block
+      // timestamp at mining time, later than any time read here by however long the wallet
+      // prompt stays open. A length under 1.5 hours is lifted to 1.5 hours; longer ones already
+      // have that room. Capped at the contract maximum.
       const block = publicClient ? await publicClient.getBlock() : null;
       const chainNow = block ? Number(block.timestamp) : Math.floor(Date.now() / 1000);
-      const endsAt = BigInt(
-        Math.min(chainNow + durationSecs + 600, chainNow + MAX_DURATION)
-      );
+      const effectiveSecs = Math.max(durationSecs, MIN_DURATION + 1800);
+      const endsAt = BigInt(Math.min(chainNow + effectiveSecs, chainNow + MAX_DURATION));
       const projectNames = projects.map((p) => p.name.trim());
       const payees = projects.map((p) => p.payee.trim() as `0x${string}`);
 
@@ -221,7 +221,7 @@ export default function NewRoundPage() {
                   className="w-full px-3.5 py-2.5 rounded bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] text-sm font-mono"
                 />
                 <span className="text-[10px] text-[var(--text-muted)]">
-                  Counted from when the transaction confirms; about ten minutes are added to cover confirmation time.
+                  Counted from when the transaction confirms. A length under 1.5 hours is raised to 1.5 hours so the transaction can't be rejected while you confirm it.
                 </span>
               </div>
             </div>
