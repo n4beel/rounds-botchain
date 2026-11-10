@@ -107,7 +107,14 @@ export default function NewRoundPage() {
 
     try {
       setSubmitting(true);
-      const endsAt = BigInt(Math.floor(Date.now() / 1000) + durationSecs);
+      // Use chain time, not the browser clock: the contract checks the length against
+      // the block timestamp at mining time, which is later than any time read now.
+      // A ten-minute margin (block age plus time in the wallet prompt) keeps the round at least MIN_DURATION long when mined.
+      const block = publicClient ? await publicClient.getBlock() : null;
+      const chainNow = block ? Number(block.timestamp) : Math.floor(Date.now() / 1000);
+      const endsAt = BigInt(
+        Math.min(chainNow + durationSecs + 600, chainNow + MAX_DURATION)
+      );
       const projectNames = projects.map((p) => p.name.trim());
       const payees = projects.map((p) => p.payee.trim() as `0x${string}`);
 
@@ -213,6 +220,9 @@ export default function NewRoundPage() {
                   required
                   className="w-full px-3.5 py-2.5 rounded bg-[var(--bg-surface)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] text-sm font-mono"
                 />
+                <span className="text-[10px] text-[var(--text-muted)]">
+                  Counted from when the transaction confirms; about ten minutes are added to cover confirmation time.
+                </span>
               </div>
             </div>
 
